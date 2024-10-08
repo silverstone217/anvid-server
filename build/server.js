@@ -26,14 +26,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.rooms = void 0;
+exports.vRooms = exports.rooms = void 0;
 const express_1 = __importStar(require("express"));
 require("dotenv/config");
 const socket_io_1 = require("socket.io");
 const cors_1 = __importDefault(require("cors"));
 const uuid_1 = require("uuid");
 const chat_1 = require("./rooms/chat");
+const video_1 = require("./rooms/video");
 exports.rooms = [];
+exports.vRooms = [];
 const port = process.env.PORT;
 const app = (0, express_1.default)();
 const http = require("http");
@@ -69,7 +71,7 @@ io.on("connection", (socket) => {
     // Generate unique ID for user and emit to client
     const userId = (0, uuid_1.v4)().toString().replace(/-/g, "");
     socket.emit("userId", { id: userId });
-    // Join or create room
+    // Join or create room chat
     socket.on("join_or_create_room", (userId) => {
         // Check for existing rooms with one user
         const create_or_join = (0, chat_1.createOrJoinRoom)(userId, socket);
@@ -92,6 +94,31 @@ io.on("connection", (socket) => {
             },
         });
     });
+    // Video call launching
+    socket.on("join_or_create_video_room", (userId) => {
+        // Check for existing rooms with one user
+        const create_or_join = (0, video_1.createOrJoinVRoom)(userId, socket);
+        socket.join(create_or_join.name);
+        socket.emit("video_room", {
+            room: create_or_join,
+            data: { user: "admin", message: userId + " joined the video room" },
+        });
+        // console.log(userId + " joined the room", create_or_join.name);
+        // console.log("rooms: " + rooms.length);
+    });
+    // WebRTC signaling
+    socket.on("offer", (payload) => {
+        io.to(payload.target).emit("offer", payload);
+        console.log(JSON.stringify(payload), "offer");
+    });
+    socket.on("answer", (payload) => {
+        io.to(payload.target).emit("answer", payload);
+        console.log(JSON.stringify(payload), "answer");
+    });
+    socket.on("ice-candidate", (incoming) => {
+        io.to(incoming.target).emit("ice-candidate", incoming.candidate);
+        console.log(incoming.candidate, "candidate");
+    });
     // Leave room event
     socket.on("leave_room", ({ room, userId }) => {
         const lvRoom = exports.rooms && exports.rooms.find((rn) => rn.name === room.name);
@@ -112,8 +139,28 @@ io.on("connection", (socket) => {
     // Disconnect event
     socket.on("disconnect", (userId) => {
         console.log("User disconnected");
-        // TODO: Remove user from all rooms and handle disconnect gracefully
-        exports.rooms = exports.rooms.filter((rm) => rm.users.length > 0); // Supprimez la salle si elle est vide
+        // Quittez la salle actuelle
+        // Supprimez la salle si elle est vide
+        let rmRoom = exports.rooms && exports.rooms.find((rm) => rm.users.includes(userId));
+        if (rmRoom) {
+            rmRoom.users = rmRoom.users.filter((us) => us !== userId);
+            // Émettre l'événement pour notifier que l'utilisateur a quitté
+            io.to(rmRoom.name).emit("user_left", {
+                room: rmRoom,
+                data: { user: "admin", message: `${userId} has left the room` },
+            });
+            exports.rooms = exports.rooms.filter((r) => r.name !== rmRoom.name);
+            exports.rooms.push(rmRoom);
+        }
+        let vRmRoom = exports.vRooms && exports.vRooms.find((rm) => rm.users.includes(userId));
+        if (vRmRoom) {
+            vRmRoom.users = vRmRoom.users.filter((us) => us !== userId);
+            exports.vRooms = exports.vRooms.filter((r) => r.name !== vRmRoom.name);
+            exports.vRooms.push(vRmRoom);
+        }
+        // Supprimez les salles vides
+        exports.rooms = exports.rooms.filter((rm) => rm.users.length > 0);
+        exports.vRooms = exports.vRooms.filter((rm) => rm.users.length > 0);
     });
 });
 // rooms.length = 0;
