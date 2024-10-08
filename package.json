@@ -1,0 +1,28 @@
+{
+  "name": "anvid",
+  "version": "1.0.0",
+  "description": "anvid server socket.io",
+  "main": "server.ts",
+  "scripts": {
+    "build": "npx tsc",
+    "start": "node build/server.js",
+    "dev": "nodemon src/server.ts"
+  },
+  "author": "Stephane Mfuni",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/socket.io": "^3.0.2",
+    "@types/uuid": "^10.0.0",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.6.2"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "nodemon": "^3.1.7",
+    "uuid": "^10.0.0"
+  }
+}
