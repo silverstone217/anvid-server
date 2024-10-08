@@ -100,8 +100,11 @@ io.on("connection", (socket: Socket) => {
   );
 
   // Disconnect event
-  socket.on("disconnect", () => {
+  socket.on("disconnect", (userId: string) => {
     console.log("User disconnected");
+    // TODO: Remove user from all rooms and handle disconnect gracefully
+
+    rooms = rooms.filter((rm) => rm.users.length > 0); // Supprimez la salle si elle est vide
   });
 });
 // rooms.length = 0;
