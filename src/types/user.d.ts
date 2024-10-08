@@ -8,3 +8,9 @@ export interface MsgType {
   message: string;
   room: RoomType;
 }
+
+export interface DataVideoRoomResponse {
+  room: RoomType;
+  error?: string | null;
+  data: { stream: MediaStream | null; user: string };
+}

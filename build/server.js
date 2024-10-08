@@ -107,18 +107,29 @@ io.on("connection", (socket) => {
         // console.log(userId + " joined the room", create_or_join.name);
         // console.log("rooms: " + rooms.length);
     });
-    // WebRTC signaling
-    socket.on("offer", (payload) => {
-        io.to(payload.target).emit("offer", payload);
-        console.log(JSON.stringify(payload), "offer");
+    // Video call receiving
+    socket.on("localVideo", (payload) => {
+        const { room, candidate } = payload;
+        // console.log("Candidat reçu :", candidate);
+        socket.to(room.name).emit("localVideo", payload);
     });
-    socket.on("answer", (payload) => {
-        io.to(payload.target).emit("answer", payload);
-        console.log(JSON.stringify(payload), "answer");
+    // Handle video offer
+    socket.on("video_offer", (payload) => {
+        const { room, offer, userId } = payload;
+        // console.log("Offre vidéo reçue :", offer);
+        socket.to(room.name).emit("video_offer", {
+            offer,
+            userId,
+        });
     });
-    socket.on("ice-candidate", (incoming) => {
-        io.to(incoming.target).emit("ice-candidate", incoming.candidate);
-        console.log(incoming.candidate, "candidate");
+    // Handle video answer
+    socket.on("video_answer", (payload) => {
+        const { room, answer, userId } = payload;
+        // console.log("Réponse vidéo reçue :", answer);
+        socket.to(room.name).emit("video_answer", {
+            answer,
+            userId,
+        });
     });
     // Leave room event
     socket.on("leave_room", ({ room, userId }) => {

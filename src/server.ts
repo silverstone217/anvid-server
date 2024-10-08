@@ -3,7 +3,7 @@ import "dotenv/config";
 import { Server, Socket } from "socket.io";
 import cors from "cors";
 import { v4 as uuidv4 } from "uuid";
-import { MsgType, RoomType } from "./types/user";
+import { DataVideoRoomResponse, MsgType, RoomType } from "./types/user";
 import { createOrJoinRoom } from "./rooms/chat";
 import { createOrJoinVRoom } from "./rooms/video";
 
@@ -92,20 +92,34 @@ io.on("connection", (socket: Socket) => {
     // console.log("rooms: " + rooms.length);
   });
 
-  // WebRTC signaling
-  socket.on("offer", (payload) => {
-    io.to(payload.target).emit("offer", payload);
-    console.log(JSON.stringify(payload), "offer");
+  // Video call receiving
+  socket.on("localVideo", (payload) => {
+    const { room, candidate } = payload;
+    // console.log("Candidat reçu :", candidate);
+
+    socket.to(room.name).emit("localVideo", payload);
   });
 
-  socket.on("answer", (payload) => {
-    io.to(payload.target).emit("answer", payload);
-    console.log(JSON.stringify(payload), "answer");
+  // Handle video offer
+  socket.on("video_offer", (payload) => {
+    const { room, offer, userId } = payload;
+    // console.log("Offre vidéo reçue :", offer);
+
+    socket.to(room.name).emit("video_offer", {
+      offer,
+      userId,
+    });
   });
 
-  socket.on("ice-candidate", (incoming) => {
-    io.to(incoming.target).emit("ice-candidate", incoming.candidate);
-    console.log(incoming.candidate, "candidate");
+  // Handle video answer
+  socket.on("video_answer", (payload) => {
+    const { room, answer, userId } = payload;
+    // console.log("Réponse vidéo reçue :", answer);
+
+    socket.to(room.name).emit("video_answer", {
+      answer,
+      userId,
+    });
   });
 
   // Leave room event
