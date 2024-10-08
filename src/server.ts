@@ -137,24 +137,24 @@ io.on("connection", (socket: Socket) => {
     // Quittez la salle actuelle
 
     // Supprimez la salle si elle est vide
-    let rmRoom = rooms && rooms.find((rm) => rm.users.includes(userId));
-    if (rmRoom) {
-      rmRoom.users = rmRoom.users.filter((us) => us !== userId);
-      // Émettre l'événement pour notifier que l'utilisateur a quitté
-      io.to(rmRoom.name).emit("user_left", {
-        room: rmRoom,
-        data: { user: "admin", message: `${userId} has left the room` },
-      });
-      rooms = rooms.filter((r) => r.name !== rmRoom.name);
-      rooms.push(rmRoom);
-    }
+    // let rmRoom = rooms && rooms.find((rm) => rm.users.includes(userId));
+    // if (rmRoom) {
+    //   rmRoom.users = rmRoom.users.filter((us) => us !== userId);
+    //   // Émettre l'événement pour notifier que l'utilisateur a quitté
+    //   io.to(rmRoom.name).emit("user_left", {
+    //     room: rmRoom,
+    //     data: { user: "admin", message: `${userId} has left the room` },
+    //   });
+    //   rooms = rooms.filter((r) => r.name !== rmRoom.name);
+    //   rooms.push(rmRoom);
+    // }
 
-    let vRmRoom = vRooms && vRooms.find((rm) => rm.users.includes(userId));
-    if (vRmRoom) {
-      vRmRoom.users = vRmRoom.users.filter((us) => us !== userId);
-      vRooms = vRooms.filter((r) => r.name !== vRmRoom.name);
-      vRooms.push(vRmRoom);
-    }
+    // let vRmRoom = vRooms && vRooms.find((rm) => rm.users.includes(userId));
+    // if (vRmRoom) {
+    //   vRmRoom.users = vRmRoom.users.filter((us) => us !== userId);
+    //   vRooms = vRooms.filter((r) => r.name !== vRmRoom.name);
+    //   vRooms.push(vRmRoom);
+    // }
 
     // Supprimez les salles vides
     rooms = rooms.filter((rm) => rm.users.length > 0);

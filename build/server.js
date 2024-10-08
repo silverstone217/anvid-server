@@ -141,23 +141,23 @@ io.on("connection", (socket) => {
         console.log("User disconnected");
         // Quittez la salle actuelle
         // Supprimez la salle si elle est vide
-        let rmRoom = exports.rooms && exports.rooms.find((rm) => rm.users.includes(userId));
-        if (rmRoom) {
-            rmRoom.users = rmRoom.users.filter((us) => us !== userId);
-            // Émettre l'événement pour notifier que l'utilisateur a quitté
-            io.to(rmRoom.name).emit("user_left", {
-                room: rmRoom,
-                data: { user: "admin", message: `${userId} has left the room` },
-            });
-            exports.rooms = exports.rooms.filter((r) => r.name !== rmRoom.name);
-            exports.rooms.push(rmRoom);
-        }
-        let vRmRoom = exports.vRooms && exports.vRooms.find((rm) => rm.users.includes(userId));
-        if (vRmRoom) {
-            vRmRoom.users = vRmRoom.users.filter((us) => us !== userId);
-            exports.vRooms = exports.vRooms.filter((r) => r.name !== vRmRoom.name);
-            exports.vRooms.push(vRmRoom);
-        }
+        // let rmRoom = rooms && rooms.find((rm) => rm.users.includes(userId));
+        // if (rmRoom) {
+        //   rmRoom.users = rmRoom.users.filter((us) => us !== userId);
+        //   // Émettre l'événement pour notifier que l'utilisateur a quitté
+        //   io.to(rmRoom.name).emit("user_left", {
+        //     room: rmRoom,
+        //     data: { user: "admin", message: `${userId} has left the room` },
+        //   });
+        //   rooms = rooms.filter((r) => r.name !== rmRoom.name);
+        //   rooms.push(rmRoom);
+        // }
+        // let vRmRoom = vRooms && vRooms.find((rm) => rm.users.includes(userId));
+        // if (vRmRoom) {
+        //   vRmRoom.users = vRmRoom.users.filter((us) => us !== userId);
+        //   vRooms = vRooms.filter((r) => r.name !== vRmRoom.name);
+        //   vRooms.push(vRmRoom);
+        // }
         // Supprimez les salles vides
         exports.rooms = exports.rooms.filter((rm) => rm.users.length > 0);
         exports.vRooms = exports.vRooms.filter((rm) => rm.users.length > 0);
