@@ -71,6 +71,7 @@ io.on("connection", (socket) => {
     // Generate unique ID for user and emit to client
     const userId = (0, uuid_1.v4)().toString().replace(/-/g, "");
     socket.emit("userId", { id: userId });
+    socket.userId = userId;
     // Join or create room chat
     socket.on("join_or_create_room", (userId) => {
         // Check for existing rooms with one user
@@ -137,30 +138,23 @@ io.on("connection", (socket) => {
         }
     });
     // Disconnect event
-    socket.on("disconnect", (userId) => {
-        console.log("User disconnected");
-        // Quittez la salle actuelle
-        // Supprimez la salle si elle est vide
-        // let rmRoom = rooms && rooms.find((rm) => rm.users.includes(userId));
-        // if (rmRoom) {
-        //   rmRoom.users = rmRoom.users.filter((us) => us !== userId);
-        //   // Émettre l'événement pour notifier que l'utilisateur a quitté
-        //   io.to(rmRoom.name).emit("user_left", {
-        //     room: rmRoom,
-        //     data: { user: "admin", message: `${userId} has left the room` },
-        //   });
-        //   rooms = rooms.filter((r) => r.name !== rmRoom.name);
-        //   rooms.push(rmRoom);
-        // }
-        // let vRmRoom = vRooms && vRooms.find((rm) => rm.users.includes(userId));
-        // if (vRmRoom) {
-        //   vRmRoom.users = vRmRoom.users.filter((us) => us !== userId);
-        //   vRooms = vRooms.filter((r) => r.name !== vRmRoom.name);
-        //   vRooms.push(vRmRoom);
-        // }
-        // Supprimez les salles vides
-        exports.rooms = exports.rooms.filter((rm) => rm.users.length > 0);
-        exports.vRooms = exports.vRooms.filter((rm) => rm.users.length > 0);
+    socket.on("disconnect", () => {
+        console.log(`User ${socket.userId} disconnected`);
+        // Notify other users in the room
+        const roomsJoined = Array.from(socket.rooms);
+        roomsJoined.forEach((room) => {
+            io.to(room).emit("user_left", {
+                room,
+                data: { user: "admin", message: `${socket.userId} has left the room` },
+            });
+        });
+        // Clean up rooms
+        exports.rooms.forEach((room) => {
+            room.users = room.users.filter((user) => user !== socket.userId);
+            if (room.users.length === 0) {
+                exports.rooms = exports.rooms.filter((r) => r.name !== room.name); // Remove empty rooms
+            }
+        });
     });
 });
 // rooms.length = 0;

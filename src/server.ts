@@ -50,6 +50,7 @@ io.on("connection", (socket: Socket) => {
   // Generate unique ID for user and emit to client
   const userId = uuidv4().toString().replace(/-/g, "");
   socket.emit("userId", { id: userId });
+  socket.userId = userId;
 
   // Join or create room chat
   socket.on("join_or_create_room", (userId) => {
@@ -132,33 +133,26 @@ io.on("connection", (socket: Socket) => {
   );
 
   // Disconnect event
-  socket.on("disconnect", (userId: string) => {
-    console.log("User disconnected");
-    // Quittez la salle actuelle
+  socket.on("disconnect", () => {
+    console.log(`User ${socket.userId} disconnected`);
 
-    // Supprimez la salle si elle est vide
-    // let rmRoom = rooms && rooms.find((rm) => rm.users.includes(userId));
-    // if (rmRoom) {
-    //   rmRoom.users = rmRoom.users.filter((us) => us !== userId);
-    //   // Émettre l'événement pour notifier que l'utilisateur a quitté
-    //   io.to(rmRoom.name).emit("user_left", {
-    //     room: rmRoom,
-    //     data: { user: "admin", message: `${userId} has left the room` },
-    //   });
-    //   rooms = rooms.filter((r) => r.name !== rmRoom.name);
-    //   rooms.push(rmRoom);
-    // }
+    // Notify other users in the room
+    const roomsJoined = Array.from(socket.rooms);
 
-    // let vRmRoom = vRooms && vRooms.find((rm) => rm.users.includes(userId));
-    // if (vRmRoom) {
-    //   vRmRoom.users = vRmRoom.users.filter((us) => us !== userId);
-    //   vRooms = vRooms.filter((r) => r.name !== vRmRoom.name);
-    //   vRooms.push(vRmRoom);
-    // }
+    roomsJoined.forEach((room) => {
+      io.to(room).emit("user_left", {
+        room,
+        data: { user: "admin", message: `${socket.userId} has left the room` },
+      });
+    });
 
-    // Supprimez les salles vides
-    rooms = rooms.filter((rm) => rm.users.length > 0);
-    vRooms = vRooms.filter((rm) => rm.users.length > 0);
+    // Clean up rooms
+    rooms.forEach((room) => {
+      room.users = room.users.filter((user) => user !== socket.userId);
+      if (room.users.length === 0) {
+        rooms = rooms.filter((r) => r.name !== room.name); // Remove empty rooms
+      }
+    });
   });
 });
 // rooms.length = 0;
