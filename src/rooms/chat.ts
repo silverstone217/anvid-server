@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { rooms } from "../server";
+import { rooms } from "../server.js";
 import { RoomType } from "../types/user";
 import { v4 as uuidv4 } from "uuid";
 

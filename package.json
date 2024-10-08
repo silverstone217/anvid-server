@@ -2,7 +2,7 @@
   "name": "anvid",
   "version": "1.0.0",
   "description": "anvid server socket.io",
-  "main": "server.ts",
+  "main": "src/server.ts",
   "scripts": {
     "build": "npx tsc",
     "start": "node build/server.js",
