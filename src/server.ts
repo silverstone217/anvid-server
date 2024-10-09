@@ -3,7 +3,7 @@ import "dotenv/config";
 import { Server, Socket } from "socket.io";
 import cors from "cors";
 import { v4 as uuidv4 } from "uuid";
-import { DataVideoRoomResponse, MsgType, RoomType } from "./types/user";
+import { MsgType, RoomType } from "./types/user";
 import { createOrJoinRoom } from "./rooms/chat";
 import { createOrJoinVRoom } from "./rooms/video";
 
@@ -127,6 +127,7 @@ io.on("connection", (socket: Socket) => {
     "leave_room",
     ({ room, userId }: { userId: string; room: RoomType }) => {
       const lvRoom = rooms && rooms.find((rn) => rn.name === room.name);
+      const vLvRoom = vRooms && vRooms.find((rn) => rn.name === room.name);
 
       if (lvRoom) {
         // Retirer l'utilisateur de la salle
@@ -143,18 +144,64 @@ io.on("connection", (socket: Socket) => {
           rooms = rooms.filter((rm) => rm.name !== room.name); // Supprimez la salle si elle est vide
         }
       }
+      if (vLvRoom) {
+        // Retirer l'utilisateur de la salle
+        vLvRoom.users = vLvRoom.users.filter((uId) => uId !== userId);
+
+        // Émettre l'événement pour notifier que l'utilisateur a quitté
+        io.to(room.name).emit("user_left", {
+          room,
+          data: { user: "admin", message: `${userId} has left the room` },
+        });
+
+        // Si la salle est vide après le départ de l'utilisateur, vous pouvez choisir de la supprimer
+        if (vLvRoom.users.length === 0) {
+          vRooms = vRooms.filter((rm) => rm.name !== room.name); // Supprimez la salle si elle est vide
+        }
+      }
     }
   );
+
+  // socket.on(
+  //   "leave_vRoom",
+  //   ({ room, userId }: { userId: string; room: RoomType }) => {
+  //     const lvRoom = vRooms && vRooms.find((rn) => rn.name === room.name);
+
+  //     if (lvRoom) {
+  //       // Retirer l'utilisateur de la salle
+  //       lvRoom.users = lvRoom.users.filter((uId) => uId !== userId);
+
+  //       // Émettre l'événement pour notifier que l'utilisateur a quitté
+  //       io.to(room.name).emit("user_left", {
+  //         room,
+  //         data: { user: "admin", message: `${userId} has left the room` },
+  //       });
+
+  //       // Si la salle est vide après le départ de l'utilisateur, vous pouvez choisir de la supprimer
+  //       if (lvRoom.users.length === 0) {
+  //         vRooms = vRooms.filter((rm) => rm.name !== room.name); // Supprimez la salle si elle est vide
+  //       }
+  //     }
+  //   }
+  // );
 
   // Disconnect event
   socket.on("disconnect", () => {
     console.log(`User ${socket.userId} disconnected`);
 
-    // Notify other users in the room
-    const roomsJoined = Array.from(socket.rooms);
+    // Notifier les autres utilisateurs dans la salle
+    const roomsJoined = rooms;
+    const vRoomsJoined = vRooms;
 
     roomsJoined.forEach((room) => {
-      io.to(room).emit("user_left", {
+      io.to(room.name).emit("user_left", {
+        room,
+        data: { user: "admin", message: `${socket.userId} has left the room` },
+      });
+    });
+
+    vRoomsJoined.forEach((room) => {
+      io.to(room.name).emit("user_left", {
         room,
         data: { user: "admin", message: `${socket.userId} has left the room` },
       });
@@ -165,6 +212,12 @@ io.on("connection", (socket: Socket) => {
       room.users = room.users.filter((user) => user !== socket.userId);
       if (room.users.length === 0) {
         rooms = rooms.filter((r) => r.name !== room.name); // Remove empty rooms
+      }
+    });
+    vRooms.forEach((room) => {
+      room.users = room.users.filter((user) => user !== socket.userId);
+      if (room.users.length === 0) {
+        vRooms = vRooms.filter((r) => r.name !== room.name); // Remove empty rooms
       }
     });
   });
