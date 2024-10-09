@@ -1,4 +1,4 @@
-#### Anvid - Backend
+# Anvid - Backend
 
 ## Description
 
@@ -25,4 +25,12 @@ Anvid is an anonymous video chat application that allows users to connect and co
    ```bash
    git clone https://github.com/silverstone217/anvid-server.git
    cd anvid-server
+   ```
+2. Install the following dependencies:
+   ```bash
+   npm install
+   ```
+3. Run the project
+   ```bash
+   npm run dev
    ```
